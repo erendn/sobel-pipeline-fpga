@@ -1,0 +1,6 @@
+*.png
+*.hex
+*.vcd
+*.fst
+tb_file
+.DS_Store
