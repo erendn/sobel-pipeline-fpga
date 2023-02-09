@@ -8,6 +8,7 @@ grayscale = True
 
 size = Image.open(f"{image_to_hex}.png").size
 
+warning_message = ""
 
 if sys.argv[1] == "tohex":
     img = Image.open(f"{image_to_hex}.png")
@@ -41,11 +42,14 @@ if sys.argv[1] == "topng":
         for line in lines:
             if line[0] == '/':
                 continue
+            if 'x' in line:
+                warning_message = "X found in data"
+                line = line.replace('x', '0')
             rows.append(line.rstrip('\n'))
         for i in range(size[0]):
             for j in range(size[1]):
                 if grayscale:
-                    pixel = int(rows[i * size[0] + j], 16)
+                    pixel = int(rows[i * size[1] + j], 16)
                     img.putpixel((i, j), pixel)
                 else:
                     pixel = [0, 0, 0, 255]
@@ -53,3 +57,6 @@ if sys.argv[1] == "topng":
                         pixel[k] = int(hex_pixels[j][k*2:(k+1)*2], 16)
                     img.putpixel((i, j), tuple(pixel))
     img.save(f"{hex_to_image}.png")
+
+if len(warning_message):
+    print(warning_message)

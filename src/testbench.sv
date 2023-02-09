@@ -1,16 +1,23 @@
 `timescale 1ns/1ps
 module testbench();
 
-    localparam WIDTH  = 64;
-    localparam HEIGHT = 64;
+    localparam WIDTH    = 640;
+    localparam HEIGHT   = 480;
+    localparam DEBUG    = 0;
+    localparam WAVEFORM = 1;
 
     logic  [0:0] clk;
-    wire   [0:0] reset;
+    logic  [0:0] reset;
 
     logic [7:0] image_r [WIDTH-1:0][HEIGHT-1:0];
-    wire  [7:0] image_w [WIDTH-1:0][HEIGHT-1:0];
 
-    logic [7:0] image_out_r [WIDTH-1:0][HEIGHT-1:0];
+    logic [0:0] valid_i_r;
+    logic [7:0] pixel_i_r;
+    logic [0:0] valid_o_w;
+    wire  [7:0] pixel_o_w;
+
+    integer row_int;
+    integer col_int;
 
     sobel_filter
        #(.WIDTH_P(WIDTH)
@@ -18,8 +25,10 @@ module testbench();
     sobel_filter_inst
         (.clk_i(clk)
         ,.reset_i(reset)
-        ,.image_i(image_r)
-        ,.image_o(image_w)
+        ,.valid_i(valid_i_r)
+        ,.pixel_i(pixel_i_r)
+        ,.valid_o(valid_o_w)
+        ,.pixel_o(pixel_o_w)
         );
 
     initial begin
@@ -29,42 +38,88 @@ module testbench();
     end
 
     initial begin
+        if (DEBUG || WAVEFORM) begin
 `ifdef VERILATOR
-        $dumpfile("verilator.fst");
+            $dumpfile("verilator.fst");
 `else
-        $dumpfile("iverilog.vcd");
+            $dumpfile("iverilog.vcd");
 `endif
-        $dumpvars;
+            $dumpvars;
+        end
+
+        row_int = 0;
+        col_int = 0;
+
+        valid_i_r = 1'b0;
+        pixel_i_r = '0;
 
         $display("Begin Test:");
 
         $display("   Reading image file: sample.hex");
         $readmemh("sample.hex", image_r);
         $display("   Image file is read.");
-        $display("      Sample pixel at (%0d, %0d) = 0x%0h", 5, 5, image_r[5][5]);
+        if (DEBUG) begin
+            $display("      Sample pixel at (%0d, %0d) = 0x%0h", 5, 5, image_r[5][5]);
+        end
+
+        $display("   Applying reset...");
+        @(negedge clk);
+        reset = 1'b1;
+        for (int i = 0; i < 10; i = i + 1) begin
+            @(negedge clk);
+        end
+        reset = 1'b0;
+        $display("   Reset applied.");
 
         $display("   Starting to apply the filter.");
         @(posedge clk);
-        @(negedge clk);
-        $display("   Filter should be applied now.");
-        $display("      Sample pixel at (%0d, %0d) = 0x%0h", 5, 5, image_w[5][5]);
-
-        $display("   Writing the filtered image to the memory.");
-        for (int i = 0; i < WIDTH; i = i + 1) begin
-            for (int j = 0; j < HEIGHT; j = j + 1) begin
-                image_out_r[i][j] = image_w[i][j];
+        #(1);
+        while (row_int < HEIGHT) begin
+            valid_i_r = 1'b1;
+            pixel_i_r = image_r[col_int][row_int];
+            if (DEBUG) begin
+                $display("      Sending pixel (%0d, %0d) = 0x%0h", col_int, row_int, pixel_i_r);
             end
+            col_int++;
+            if (col_int == WIDTH) begin
+                row_int++;
+                col_int = 0;
+            end
+            @(posedge clk);
+            #(1);
         end
-        $display("   Filtered image is written to the memory.");
-        $display("      Sample pixel at (%0d, %0d) = 0x%0h", 5, 5, image_out_r[5][5]);
+        for (int i = 0 ; i < WIDTH * 2; i++) begin
+            @(posedge clk);
+        end
+        $display("   Filter should be applied now.");
+
+        if (DEBUG) begin
+            $display("      Sample pixel at (%0d, %0d) = 0x%0h", 5, 5, image_r[5][5]);
+        end
 
         $finish();
+    end
+
+    integer out_row_int = 0;
+    integer out_col_int = 0;
+    always_ff @(negedge clk) begin
+        if (valid_o_w) begin
+            image_r[out_col_int][out_row_int] <= pixel_o_w;
+            if (DEBUG) begin
+                $display("      Receiving pixel (%0d, %0d) = 0x%0h", out_col_int, out_row_int, pixel_o_w);
+            end
+            out_col_int++;
+            if (out_col_int == WIDTH) begin
+                out_row_int++;
+                out_col_int = 0;
+            end
+        end
     end
 
     final begin
         $display("End test:");
         $display("   Writing the output hex file.");
-        $writememh("filtered.hex", image_out_r);
+        $writememh("filtered.hex", image_r);
         $display("   Hex file is written.");
     end
 
