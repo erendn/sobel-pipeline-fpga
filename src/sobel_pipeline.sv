@@ -1,4 +1,5 @@
-module sobel_filter
+// This is the sobel pipeline module
+module sobel_pipeline
    #(parameter WIDTH_P  = 10
     ,parameter HEIGHT_P = 10
     )
@@ -19,7 +20,7 @@ module sobel_filter
                      ,IMAGE_DONE_S       = 6'b100000
                      } state_r, state_n;
 
-    // Size counters
+    // Pixel pointers
     logic [$clog2(HEIGHT_P)-1:0] row_ptr_r, row_ptr_n;
     logic  [$clog2(WIDTH_P)-1:0] col_ptr_r, col_ptr_n;
 
@@ -46,8 +47,10 @@ module sobel_filter
     // Sobel filtered pixel
     wire [7:0] sobel_pixel_w;
 
+    // Driver for the valid_o signal
     logic [0:0] valid_o_r;
 
+    // Output signals
     assign pixel_o = sobel_pixel_w;
     assign valid_o = valid_o_r;
 
@@ -73,9 +76,10 @@ module sobel_filter
         ,.rd_data_o(rd_data_w)
         );
 
-    sobel_pixel_mask
+    // This applies the sobel filter asynchronously
+    sobel_operator
        #()
-    sobel_pixel_mask_inst
+    sobel_operator_inst
         (.p0_i(pixels_r[0])
         ,.p1_i(pixels_r[1])
         ,.p2_i(pixels_r[2])
@@ -175,6 +179,10 @@ module sobel_filter
                     end
                 end
             end
+            // In this state:
+            //    Write the new pixel to the buffer
+            //    Give the output for "top-left" pixel
+            //    Switch to the next state when the last pixel is given
             PROCESSING_S: begin
                 // Input data needs to be valid
                 if (valid_i) begin

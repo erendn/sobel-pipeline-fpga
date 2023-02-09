@@ -1,3 +1,4 @@
+// This is a read-priority 1R1W memory
 module ram_1r1w_sync
    #(parameter WIDTH_P = 16
     ,parameter DEPTH_P = 64
@@ -12,16 +13,19 @@ module ram_1r1w_sync
 
     logic [WIDTH_P-1:0] rd_data_r;
 
+    // This is the memory block
     logic [WIDTH_P-1:0] mem [DEPTH_P-1:0];
 
     assign rd_data_o = rd_data_r;
 
+    // Write
     always_ff @(posedge clk_i) begin
         if (wr_en_i) begin
             mem[wr_addr_i] <= wr_data_i;
         end
     end
 
+    // Read
     always_ff @(posedge clk_i) begin
         rd_data_r <= mem[rd_addr_i];
     end

@@ -1,8 +1,8 @@
 TB_FILE=tb_file
 
 SOURCES += ./src/ram_1r1w_sync.sv
-SOURCES += ./src/sobel_pixel_mask.sv
-SOURCES += ./src/sobel_filter.sv
+SOURCES += ./src/sobel_operator.sv
+SOURCES += ./src/sobel_pipeline.sv
 SOURCES += ./src/testbench.sv
 
 test:

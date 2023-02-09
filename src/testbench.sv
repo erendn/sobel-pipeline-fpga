@@ -19,10 +19,10 @@ module testbench();
     integer row_int;
     integer col_int;
 
-    sobel_filter
+    sobel_pipeline
        #(.WIDTH_P(WIDTH)
         ,.HEIGHT_P(HEIGHT))
-    sobel_filter_inst
+    sobel_pipeline_inst
         (.clk_i(clk)
         ,.reset_i(reset)
         ,.valid_i(valid_i_r)
