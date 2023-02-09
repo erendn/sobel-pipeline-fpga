@@ -1,6 +1,7 @@
 // I got this module from Mahboob Karimian's website:
 //     https://hellotech.altervista.org/sobel-method-simulation-and-implementation-on-fpga/
 // I modified the code slightly but this module is essentialy an optimized sobel operator.
+/* verilator lint_off WIDTH */
 module sobel_operator
     (input  [7:0] p0_i
     ,input  [7:0] p1_i
@@ -34,4 +35,5 @@ module sobel_operator
     assign p4_o = (|sum[10:8]) ? 8'hff : sum[7:0];
 
 endmodule
+/* verilator lint_on WIDTH */
 

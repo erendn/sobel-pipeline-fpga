@@ -108,10 +108,10 @@ module testbench();
             if (DEBUG) begin
                 $display("      Receiving pixel (%0d, %0d) = 0x%0h", out_col_int, out_row_int, pixel_o_w);
             end
-            out_col_int++;
-            if (out_col_int == WIDTH) begin
-                out_row_int++;
-                out_col_int = 0;
+            out_col_int <= out_col_int + 1;
+            if (out_col_int == WIDTH - 1) begin
+                out_row_int <= out_row_int + 1;
+                out_col_int <= 0;
             end
         end
     end
