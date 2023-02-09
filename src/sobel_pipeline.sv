@@ -233,9 +233,12 @@ module sobel_pipeline
                         wr_data_r   = {pixel_i, rd_data_w[15:8]};
                         rd_addr_r   = col_ptr_r + 1;
                         valid_o_r   = 1'b1;
-                        if (row_ptr_r == HEIGHT_P - 1 && col_ptr_r == WIDTH_P - 1) begin
-                            state_n   = LAST_ROW_EMPTY_S;
+                        if (col_ptr_r == WIDTH_P - 1) begin
                             col_ptr_n = '0;
+                            rd_addr_r = '0;
+                            if (row_ptr_r == HEIGHT_P - 1) begin
+                                state_n   = LAST_ROW_EMPTY_S;
+                            end
                         end
                     end
                 end
