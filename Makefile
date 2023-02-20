@@ -2,6 +2,7 @@ TB_FILE=tb_file
 
 SOURCES += ./src/ram_1r1w_sync.sv
 SOURCES += ./src/sobel_operator.sv
+SOURCES += ./src/sobel_channel_filter.sv
 SOURCES += ./src/sobel_pipeline.sv
 SOURCES += ./src/testbench.sv
 
@@ -26,10 +27,10 @@ all: iverilog verilator
 .PHONY: all
 
 clean:
-	@rm ${TB_FILE} | true
-	@rm -r obj_dir/ | true
-	@rm iverilog.vcd | true
-	@rm verilator.fst | true
-	@rm *.hex | true
-	@rm sample_grayscale.png | true
-	@rm filtered*.png | true
+	@rm -f ${TB_FILE}
+	@rm -rf obj_dir/
+	@rm -f iverilog.vcd
+	@rm -f verilator.fst
+	@rm -f *.hex
+	@rm -f sample_grayscale.png
+	@rm -f filtered*.png

@@ -3,25 +3,29 @@ module testbench();
 
     localparam WIDTH    = 640;
     localparam HEIGHT   = 480;
+    localparam CHANNELS = 1;
+
     localparam DEBUG    = 0;
     localparam WAVEFORM = 1;
 
     logic  [0:0] clk;
     logic  [0:0] reset;
 
-    logic [7:0] image_r [WIDTH-1:0][HEIGHT-1:0];
+    logic [(CHANNELS*8)-1:0] image_r [WIDTH-1:0][HEIGHT-1:0];
 
     logic [0:0] valid_i_r;
-    logic [7:0] pixel_i_r;
+    logic [(CHANNELS*8)-1:0] pixel_i_r;
     logic [0:0] valid_o_w;
-    wire  [7:0] pixel_o_w;
+    wire  [(CHANNELS*8)-1:0] pixel_o_w;
 
     integer row_int;
     integer col_int;
 
     sobel_pipeline
        #(.WIDTH_P(WIDTH)
-        ,.HEIGHT_P(HEIGHT))
+        ,.HEIGHT_P(HEIGHT)
+        ,.CHANNELS_P(CHANNELS)
+        )
     sobel_pipeline_inst
         (.clk_i(clk)
         ,.reset_i(reset)
@@ -88,6 +92,10 @@ module testbench();
             @(posedge clk);
             #(1);
         end
+
+        // Disable input here
+        valid_i_r = 1'b0;
+
         for (int i = 0 ; i < WIDTH * 2; i++) begin
             @(posedge clk);
         end
@@ -124,3 +132,4 @@ module testbench();
     end
 
 endmodule
+
