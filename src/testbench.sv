@@ -14,9 +14,12 @@ module testbench();
     logic [(CHANNELS*8)-1:0] image_r [WIDTH-1:0][HEIGHT-1:0];
 
     logic [0:0] valid_i_r;
+    wire  [0:0] ready_o_w;
     logic [(CHANNELS*8)-1:0] pixel_i_r;
-    logic [0:0] valid_o_w;
+    wire  [0:0] valid_o_w;
+    logic [0:0] ready_i_r;
     wire  [(CHANNELS*8)-1:0] pixel_o_w;
+    wire  [0:0] last_o_w;
 
     integer row_int;
     integer col_int;
@@ -30,9 +33,12 @@ module testbench();
         (.clk_i(clk)
         ,.reset_i(reset)
         ,.valid_i(valid_i_r)
+        ,.ready_o(ready_o_w)
         ,.pixel_i(pixel_i_r)
         ,.valid_o(valid_o_w)
+        ,.ready_i(ready_i_r)
         ,.pixel_o(pixel_o_w)
+        ,.last_o(last_o_w)
         );
 
     initial begin
@@ -55,6 +61,7 @@ module testbench();
         col_int = 0;
 
         valid_i_r = 1'b0;
+        ready_i_r = 1'b1;
         pixel_i_r = '0;
 
         $display("Begin Test:");
@@ -81,13 +88,15 @@ module testbench();
         while (row_int < HEIGHT) begin
             valid_i_r = 1'b1;
             pixel_i_r = image_r[col_int][row_int];
-            if (DEBUG) begin
-                $display("      Sending pixel (%0d, %0d) = 0x%0h", col_int, row_int, pixel_i_r);
-            end
-            col_int++;
-            if (col_int == WIDTH) begin
-                row_int++;
-                col_int = 0;
+            if (ready_o_w) begin
+                if (DEBUG) begin
+                    $display("      Sending pixel (%0d, %0d) = 0x%0h", col_int, row_int, pixel_i_r);
+                end
+                col_int++;
+                if (col_int == WIDTH) begin
+                    row_int++;
+                    col_int = 0;
+                end
             end
             @(posedge clk);
             #(1);
@@ -111,7 +120,7 @@ module testbench();
     integer out_row_int = 0;
     integer out_col_int = 0;
     always_ff @(negedge clk) begin
-        if (valid_o_w) begin
+        if (valid_o_w & ready_i_r) begin
             image_r[out_col_int][out_row_int] <= pixel_o_w;
             if (DEBUG) begin
                 $display("      Receiving pixel (%0d, %0d) = 0x%0h", out_col_int, out_row_int, pixel_o_w);

@@ -4,13 +4,22 @@ module sobel_pipeline
     ,parameter HEIGHT_P = 10
     ,parameter CHANNELS_P = 1
     )
-    (input  [0:0]   clk_i
-    ,input  [0:0] reset_i
-    ,input  [0:0] valid_i
+    (input                 [0:0]   clk_i
+    ,input                 [0:0] reset_i
+    ,input                 [0:0] valid_i
+    ,output                [0:0] ready_o
     ,input  [(CHANNELS_P*8)-1:0] pixel_i
-    ,output [0:0] valid_o
+    ,output                [0:0] valid_o
+    ,input                 [0:0] ready_i
     ,output [(CHANNELS_P*8)-1:0] pixel_o
+    ,output                [0:0] last_o
     );
+
+    wire [CHANNELS_P-1:0] ready_o_w, valid_o_w, last_o_w;
+
+    assign ready_o = |ready_o_w;
+    assign valid_o = |valid_o_w;
+    assign last_o  = |last_o_w;
 
     generate
         for (genvar itr = 0; itr < CHANNELS_P; itr++) begin
@@ -22,9 +31,12 @@ module sobel_pipeline
                 (.clk_i(clk_i)
                 ,.reset_i(reset_i)
                 ,.valid_i(valid_i)
+                ,.ready_o(ready_o_w[itr])
                 ,.pixel_i(pixel_i[itr*8 +: 8])
-                ,.valid_o(valid_o)
+                ,.valid_o(valid_o_w[itr])
+                ,.ready_i(ready_i)
                 ,.pixel_o(pixel_o[itr*8 +: 8])
+                ,.last_o(last_o_w[itr])
                 );
         end
     endgenerate

@@ -6,9 +6,12 @@ module sobel_channel_filter
     (input  [0:0]   clk_i
     ,input  [0:0] reset_i
     ,input  [0:0] valid_i
+    ,output [0:0] ready_o
     ,input  [7:0] pixel_i
     ,output [0:0] valid_o
+    ,input  [0:0] ready_i
     ,output [7:0] pixel_o
+    ,output [0:0]  last_o
     );
 
     // State registers
@@ -18,6 +21,10 @@ module sobel_channel_filter
                      ,LAST_ROW_EMPTY_S   = 6'b001000
                      ,LAST_PIXEL_EMPTY_S = 6'b010000
                      } state_r, state_n;
+
+    // Registers to manage AXI Lite
+    logic [0:0] received_r, received_n;
+    logic [7:0] pixel_in_r, pixel_in_n;
 
     // Pixel pointers
     logic [$clog2(HEIGHT_P)-1:0] row_ptr_r, row_ptr_n;
@@ -47,11 +54,15 @@ module sobel_channel_filter
     wire [7:0] sobel_pixel_w;
 
     // Driver for the valid_o signal
+    logic [0:0] ready_o_r;
     logic [0:0] valid_o_r;
+    logic [0:0] last_o_r;
 
     // Output signals
     assign pixel_o = sobel_pixel_w;
+    assign ready_o = ready_o_r;
     assign valid_o = valid_o_r;
+    assign last_o  = last_o_r;
 
     //   This is the "shift register" buffer.
     //   We store 2 pixels in each row and store 2 rows of the image in the
@@ -93,43 +104,52 @@ module sobel_channel_filter
 
     always_ff @(posedge clk_i) begin
         if (reset_i) begin
-            state_r   <= LOAD_BUFFER_TOP_S;
-            row_ptr_r <= '0;
-            col_ptr_r <= '0;
-            for (int i = 0; i < 9; i = i + 1) begin
+            state_r    <= LOAD_BUFFER_TOP_S;
+            received_r <= 1'b0;
+            pixel_in_r <= 8'h00;
+            row_ptr_r  <= '0;
+            col_ptr_r  <= '0;
+            for (int i = 0; i < 9; i++) begin
                 buffer_r[i] <= 8'h00;
             end
         end else begin
-            state_r   <= state_n;
-            row_ptr_r <= row_ptr_n;
-            col_ptr_r <= col_ptr_n;
-            for (int i = 0; i < 9; i = i + 1) begin
+            state_r    <= state_n;
+            received_r <= received_n;
+            pixel_in_r <= pixel_in_n;
+            row_ptr_r  <= row_ptr_n;
+            col_ptr_r  <= col_ptr_n;
+            for (int i = 0; i < 9; i++) begin
                 buffer_r[i] <= buffer_n[i];
             end
         end
     end
 
     always_comb begin
-        state_n   = state_r;
-        row_ptr_n = row_ptr_r;
-        col_ptr_n = col_ptr_r;
-        for (int i = 0; i < 9; i = i + 1) begin
+        state_n    = state_r;
+        received_n = received_r;
+        pixel_in_n = pixel_in_r;
+        row_ptr_n  = row_ptr_r;
+        col_ptr_n  = col_ptr_r;
+        for (int i = 0; i < 9; i++) begin
             pixels_r[i] = 8'h00;
         end
-        for (int i = 0; i < 9; i = i + 1) begin
+        for (int i = 0; i < 9; i++) begin
             buffer_n[i] = buffer_r[i];
         end
-        wr_en_r   = 1'b0;
-        wr_addr_r = col_ptr_r;
-        wr_data_r = 16'h00;
-        rd_addr_r = col_ptr_r;
-        valid_o_r = 1'b0;
+        wr_en_r    = 1'b0;
+        wr_addr_r  = col_ptr_r;
+        wr_data_r  = 16'h00;
+        rd_addr_r  = col_ptr_r;
+        ready_o_r  = ~received_r;
+        valid_o_r  = received_r;
+        last_o_r   = 1'b0;
         case (state_r)
             // In this state:
             //    Write a pixel to the top row at each cycle
             //    Don't give any output yet
             //    Continue with the bottom row after reaching the end
             LOAD_BUFFER_TOP_S: begin
+                ready_o_r = 1'b1;
                 // Input data needs to be valid
                 if (valid_i) begin
                     // Increment pointers
@@ -154,27 +174,46 @@ module sobel_channel_filter
             //    Give "0" output (for the top row)
             //    Start processing the pixels after reaching the end
             LOAD_BUFFER_BOT_S: begin
-                // Input data needs to be valid
-                if (valid_i) begin
-                    // Increment pointers
-                    col_ptr_n = col_ptr_r + 1;
-                    // Write the input data
-                    wr_en_r   = 1'b1;
-                    wr_addr_r = col_ptr_r;
-                    wr_data_r = {pixel_i, rd_data_w[7:0]};
-                    // Read the next address
-                    rd_addr_r = col_ptr_r + 1;
-                    // Starting from the second pixel in this row (*),
-                    // output "0" data (pixels_r must be 0)
-                    if (col_ptr_r > 0) begin
-                        valid_o_r = 1'b1;
+                if (col_ptr_r == 0) begin
+                    ready_o_r = 1'b1;
+                    if (valid_i) begin
+                        // Increment pointers
+                        col_ptr_n = col_ptr_r + 1;
+                        // Write the input data
+                        wr_en_r   = 1'b1;
+                        wr_addr_r = col_ptr_r;
+                        wr_data_r = {8'h0, pixel_i};
+                        // Read the next address
+                        rd_addr_r = col_ptr_r + 1;
                     end
-                    // Reached the end of the row
-                    if (col_ptr_r == WIDTH_P - 1) begin
-                        state_n   = PROCESSING_S;
-                        row_ptr_n = 2;
-                        col_ptr_n = '0;
-                        rd_addr_r = '0;
+                end else begin
+                    if (valid_i & ~received_r) begin
+                        received_n = 1'b1;
+                        pixel_in_n = pixel_i;
+                    end
+                    // Input data needs to be valid
+                    if (ready_i & received_r) begin
+                        received_n = 1'b0;
+                        // Increment pointers
+                        col_ptr_n  = col_ptr_r + 1;
+                        // Write the input data
+                        wr_en_r    = 1'b1;
+                        wr_addr_r  = col_ptr_r;
+                        wr_data_r  = {pixel_in_r, rd_data_w[7:0]};
+                        // Read the next address
+                        rd_addr_r  = col_ptr_r + 1;
+                        // Starting from the second pixel in this row (*),
+                        // output "0" data (pixels_r must be 0)
+                        if (col_ptr_r > 0) begin
+                            valid_o_r = 1'b1;
+                        end
+                        // Reached the end of the row
+                        if (col_ptr_r == WIDTH_P - 1) begin
+                            state_n   = PROCESSING_S;
+                            row_ptr_n = 2;
+                            col_ptr_n = '0;
+                            rd_addr_r = '0;
+                        end
                     end
                 end
             end
@@ -184,7 +223,12 @@ module sobel_channel_filter
             //    Switch to the next state when the last pixel is given
             PROCESSING_S: begin
                 // Input data needs to be valid
-                if (valid_i) begin
+                if (valid_i & ~received_r) begin
+                    received_n = 1'b1;
+                    pixel_in_n = pixel_i;
+                end
+                if (ready_i & received_r) begin
+                    received_n = 1'b0;
                     if (col_ptr_r < WIDTH_P - 1) begin
                         col_ptr_n = col_ptr_r + 1;
                     end else begin
@@ -194,22 +238,20 @@ module sobel_channel_filter
                     if (col_ptr_r == 0) begin
                         buffer_n[0] = rd_data_w[7:0];
                         buffer_n[2] = rd_data_w[15:8];
-                        buffer_n[4] = pixel_i;
+                        buffer_n[4] = pixel_in_r;
                         wr_en_r     = 1'b1;
                         wr_addr_r   = col_ptr_r;
-                        wr_data_r   = {pixel_i, rd_data_w[15:8]};
+                        wr_data_r   = {pixel_in_r, rd_data_w[15:8]};
                         rd_addr_r   = col_ptr_r + 1;
-                        valid_o_r   = 1'b1;
                     end
                     if (col_ptr_r == 1) begin
                         buffer_n[1] = rd_data_w[7:0];
                         buffer_n[3] = rd_data_w[15:8];
-                        buffer_n[5] = pixel_i;
+                        buffer_n[5] = pixel_in_r;
                         wr_en_r     = 1'b1;
                         wr_addr_r   = col_ptr_r;
-                        wr_data_r   = {pixel_i, rd_data_w[15:8]};
+                        wr_data_r   = {pixel_in_r, rd_data_w[15:8]};
                         rd_addr_r   = col_ptr_r + 1;
-                        valid_o_r   = 1'b1;
                     end
                     if (col_ptr_r > 1) begin
                         pixels_r[0] = buffer_r[0];
@@ -220,16 +262,16 @@ module sobel_channel_filter
                         pixels_r[7] = buffer_r[5];
                         pixels_r[2] = rd_data_w[7:0];
                         pixels_r[5] = rd_data_w[15:8];
-                        pixels_r[8] = pixel_i;
+                        pixels_r[8] = pixel_in_r;
                         buffer_n[0] = buffer_r[1];
                         buffer_n[2] = buffer_r[3];
                         buffer_n[4] = buffer_r[5];
                         buffer_n[1] = rd_data_w[7:0];
                         buffer_n[3] = rd_data_w[15:8];
-                        buffer_n[5] = pixel_i;
+                        buffer_n[5] = pixel_in_r;
                         wr_en_r     = 1'b1;
                         wr_addr_r   = col_ptr_r;
-                        wr_data_r   = {pixel_i, rd_data_w[15:8]};
+                        wr_data_r   = {pixel_in_r, rd_data_w[15:8]};
                         rd_addr_r   = col_ptr_r + 1;
                         valid_o_r   = 1'b1;
                         if (col_ptr_r == WIDTH_P - 1) begin
@@ -243,15 +285,25 @@ module sobel_channel_filter
                 end
             end
             LAST_ROW_EMPTY_S: begin
-                col_ptr_n = col_ptr_r + 1;
+                ready_o_r = 1'b0;
                 valid_o_r = 1'b1;
-                if (col_ptr_r == WIDTH_P - 1) begin
-                    state_n = LAST_PIXEL_EMPTY_S;
+                if (ready_i) begin
+                    col_ptr_n = col_ptr_r + 1;
+                    if (col_ptr_r == WIDTH_P - 1) begin
+                        state_n = LAST_PIXEL_EMPTY_S;
+                    end
                 end
             end
             LAST_PIXEL_EMPTY_S: begin
-                state_n   = LOAD_BUFFER_TOP_S;
+                ready_o_r = 1'b0;
                 valid_o_r = 1'b1;
+                last_o_r  = 1'b1;
+                if (ready_i) begin
+                    state_n    = LOAD_BUFFER_TOP_S;
+                    received_n = 1'b0;
+                    row_ptr_n  = '0;
+                    col_ptr_n  = '0;
+                end
             end
             default: begin
             end
