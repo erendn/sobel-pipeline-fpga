@@ -1,18 +1,18 @@
 // This is the sobel pipeline module
 module sobel_pipeline
-   #(parameter WIDTH_P  = 10
-    ,parameter HEIGHT_P = 10
+   #(parameter WIDTH_P  = 640
+    ,parameter HEIGHT_P = 480
     ,parameter CHANNELS_P = 1
     )
-    (input                 [0:0]   clk_i
-    ,input                 [0:0] reset_i
-    ,input                 [0:0] valid_i
-    ,output                [0:0] ready_o
-    ,input  [(CHANNELS_P*8)-1:0] pixel_i
-    ,output                [0:0] valid_o
-    ,input                 [0:0] ready_i
-    ,output [(CHANNELS_P*8)-1:0] pixel_o
-    ,output                [0:0] last_o
+    (input   [0:0]   clk_i
+    ,input   [0:0] reset_i
+    ,input   [0:0] valid_i
+    ,output  [0:0] ready_o
+    ,input  [31:0] pixel_i
+    ,output  [0:0] valid_o
+    ,input   [0:0] ready_i
+    ,output [31:0] pixel_o
+    ,output  [0:0]  last_o
     );
 
     wire [CHANNELS_P-1:0] ready_o_w, valid_o_w, last_o_w;

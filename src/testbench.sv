@@ -13,17 +13,18 @@ module testbench();
 
     logic [(CHANNELS*8)-1:0] image_r [WIDTH-1:0][HEIGHT-1:0];
 
-    logic [0:0] valid_i_r;
-    wire  [0:0] ready_o_w;
+    logic              [0:0] valid_i_r;
+    wire               [0:0] ready_o_w;
     logic [(CHANNELS*8)-1:0] pixel_i_r;
-    wire  [0:0] valid_o_w;
-    logic [0:0] ready_i_r;
+    wire               [0:0] valid_o_w;
+    logic              [0:0] ready_i_r;
     wire  [(CHANNELS*8)-1:0] pixel_o_w;
-    wire  [0:0] last_o_w;
+    wire               [0:0]  last_o_w;
 
     integer row_int;
     integer col_int;
 
+    /* verilator lint_off WIDTH */
     sobel_pipeline
        #(.WIDTH_P(WIDTH)
         ,.HEIGHT_P(HEIGHT)
@@ -40,6 +41,7 @@ module testbench();
         ,.pixel_o(pixel_o_w)
         ,.last_o(last_o_w)
         );
+    /* verilator lint_on WIDTH */
 
     initial begin
         clk = 1;
