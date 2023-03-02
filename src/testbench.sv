@@ -32,7 +32,7 @@ module testbench();
         )
     sobel_pipeline_inst
         (.clk_i(clk)
-        ,.reset_i(reset)
+        ,.resetn_i(~reset)
         ,.valid_i(valid_i_r)
         ,.ready_o(ready_o_w)
         ,.pixel_i(pixel_i_r)
