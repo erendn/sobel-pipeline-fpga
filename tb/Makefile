@@ -1,10 +1,10 @@
 TB_FILE=tb_file
 
-SOURCES += ./src/ram_1r1w_sync.sv
-SOURCES += ./src/sobel_operator.sv
-SOURCES += ./src/sobel_channel_filter.sv
-SOURCES += ./src/sobel_pipeline.sv
-SOURCES += ./src/testbench.sv
+SOURCES += ../src/ram_1r1w_sync.sv
+SOURCES += ../src/sobel_operator.sv
+SOURCES += ../src/sobel_channel_filter.sv
+SOURCES += ../src/sobel_pipeline.sv
+SOURCES += ./testbench.sv
 
 iverilog:
 	@python3 image_hex.py tohex
