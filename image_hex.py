@@ -4,7 +4,7 @@ from PIL import Image
 
 image_to_hex = "sample"
 hex_to_image = "filtered"
-grayscale = True
+grayscale = False
 
 size = Image.open(f"{image_to_hex}.png").size
 
@@ -19,12 +19,12 @@ if sys.argv[1] == "tohex":
         for i in range(size[0]):
             for j in range(size[1]):
                 rgb = img.getpixel((i, j))
-                if not grayscale:
+                if grayscale:
+                    hex_val = "{0:0{1}X}".format(rgb, 2)
+                else:
                     hex_val = ""
                     for k in range(3):
                         hex_val += "{0:0{1}X}".format(rgb[k], 2)
-                else:
-                    hex_val = "{0:0{1}X}".format(rgb, 2)
                 f.write(hex_val)
                 if j < img.size[1] - 1:
                     f.write(" ")
@@ -54,7 +54,7 @@ if sys.argv[1] == "topng":
                 else:
                     pixel = [0, 0, 0, 255]
                     for k in range(3):
-                        pixel[k] = int(hex_pixels[j][k*2:(k+1)*2], 16)
+                        pixel[k] = int(rows[i * size[1] + j][k*2:(k+1)*2], 16)
                     img.putpixel((i, j), tuple(pixel))
     img.save(f"{hex_to_image}.png")
 

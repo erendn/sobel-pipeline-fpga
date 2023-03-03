@@ -3,7 +3,7 @@ module testbench();
 
     localparam WIDTH    = 640;
     localparam HEIGHT   = 480;
-    localparam CHANNELS = 1;
+    localparam CHANNELS = 3;
 
     localparam DEBUG    = 0;
     localparam WAVEFORM = 1;
