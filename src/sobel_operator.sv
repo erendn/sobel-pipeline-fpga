@@ -15,25 +15,25 @@ module sobel_operator
     ,output [7:0] p4_o
     );
 
-    // 11 bits because max value of gx and gy is 255*4 and last bit for sign
-    wire signed [10:0] gx, gy;
-    wire signed [10:0] abs_gx, abs_gy;
-    wire        [10:0] sum;
+    // 11 bits because max value of gx_w and gy_w is 255*4 and last bit for sign
+    wire signed [10:0] gx_w, gy_w;
+    wire signed [10:0] abs_gx_w, abs_gy_w;
+    wire        [10:0] sum_w;
 
     // Horizontal mask
-    assign gx = ((p2_i - p0_i) + ((p5_i - p3_i) << 1) + (p8_i - p6_i));
+    assign gx_w = ((p2_i - p0_i) + ((p5_i - p3_i) << 1) + (p8_i - p6_i));
     // Vertical mask
-    assign gy = ((p0_i - p6_i) + ((p1_i - p7_i) << 1) + (p2_i - p8_i));
+    assign gy_w = ((p0_i - p6_i) + ((p1_i - p7_i) << 1) + (p2_i - p8_i));
 
     // Absolute values of both axes
-    assign abs_gx = (gx[10] ? ~gx + 1 : gx);
-    assign abs_gy = (gy[10] ? ~gy + 1 : gy);
+    assign abs_gx_w = (gx_w[10] ? ~gx_w + 1 : gx_w);
+    assign abs_gy_w = (gy_w[10] ? ~gy_w + 1 : gy_w);
 
     // Add both axes to find the combined value
-    assign sum = (abs_gx + abs_gy);
+    assign sum_w = (abs_gx_w + abs_gy_w);
 
     // Limit the max value to 255    
-    assign p4_o = (|sum[10:8]) ? 8'hff : sum[7:0];
+    assign p4_o = (|sum_w[10:8]) ? 8'hff : sum_w[7:0];
 
 endmodule
 /* verilator lint_on WIDTH */
