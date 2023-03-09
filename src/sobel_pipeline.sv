@@ -8,10 +8,10 @@ module sobel_pipeline
     ,input   [0:0] resetn_i
     ,input   [0:0]  valid_i
     ,output  [0:0]  ready_o
-    ,input  [31:0]  pixel_i
+    ,input  [63:0]  pixel_i
     ,output  [0:0]  valid_o
     ,input   [0:0]  ready_i
-    ,output [31:0]  pixel_o
+    ,output [63:0]  pixel_o
     ,output  [0:0]   last_o
     );
 
