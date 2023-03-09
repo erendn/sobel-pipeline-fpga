@@ -6,17 +6,17 @@ Sobel pipeline project to work on an FPGA. I've tested the design on PYNQ-Z1.
 ## Repository Structure
 ```bash
 ├── sim
-│   ├── Makefile # Makefile to run simulation
-│   ├── image_hex.py # Python script to prepare images
-│   └── testbench.sv # Testbench module to run the simulation
+│   ├── Makefile                # Makefile to run simulation
+│   ├── image_hex.py            # Python script to prepare images
+│   └── testbench.sv            # Testbench module to run the simulation
 ├── src
-│   ├── ram_1r1w_sync.sv # Synchronous 1r1w RAM module
+│   ├── ram_1r1w_sync.sv        # Synchronous 1r1w RAM module
 │   ├── sobel_channel_filter.sv # Sobel filter for a single channel
-│   ├── sobel_operator.sv # Sobel operator to apply the filter on a pixel
-│   └── sobel_pipeline.sv # Top-leve module for the design
-├── .gitignore
-├── LICENSE
-└── README.md
+│   ├── sobel_operator.sv       # Sobel operator to apply the filter on a pixel
+│   └── sobel_pipeline.sv       # Top-leve module for the design
+├── .gitignore                  # Git ignore file
+├── LICENSE                     # License file
+└── README.md                   # This file
 ```
 
 
@@ -27,7 +27,7 @@ Sobel pipeline project to work on an FPGA. I've tested the design on PYNQ-Z1.
     git clone git@github.com:erendn/sobel-pipeline-fpga.git
     ```
 1. Install the following dependencies:
-    + [Python](https://www.python.org/)
+    + [Python](https://www.python.org/) >= 3.6
     + [Pillow](https://github.com/python-pillow/Pillow) library for Python
     + [Icarus Verilog](https://github.com/steveicarus/iverilog) and/or [Verilator](https://github.com/verilator/verilator)
 
