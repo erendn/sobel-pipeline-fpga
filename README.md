@@ -5,9 +5,14 @@ Sobel pipeline project to work on an FPGA. I've tested the design on PYNQ-Z1.
 
 ## Repository Structure
 ```bash
+├── pynq
+│   ├── sobel_pipeline.ipynb    # Jupyter Notebook to run the design on PYNQ-Z1
+│   ├── sobel_pipeline_rgb.bit  # Bitstream for PYNQ-Z1 overlay
+│   └── sobel_pipeline_rgb.hwh  # Hardware Handoff file for PYNQ-Z1 overlay
 ├── sim
 │   ├── Makefile                # Makefile to run simulation
 │   ├── image_hex.py            # Python script to prepare images
+│   ├── sample.png              # Sample image for simulation
 │   └── testbench.sv            # Testbench module to run the simulation
 ├── src
 │   ├── ram_1r1w_sync.sv        # Synchronous 1r1w RAM module
@@ -51,5 +56,12 @@ Alternatively, you can use the overlay files in the `pynq` folder of this reposi
 
 
 ## Instructions to Run on PYNQ-Z1
-You can also use the Jupyter Notebook in the `pynq` folder to run the design on PYNQ-Z1.
+You can also use the Jupyter Notebook in the `pynq` folder to run the design on PYNQ-Z1. You need PYNQ v3.0.0 or later
+to be able to load the overlay.
 
+
+
+* * *
+
+
+Credits to "Tauraloke" for the sample image: [Original file](https://en.wikipedia.org/wiki/File:Valve_original_%281%29.PNG)
