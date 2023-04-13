@@ -18,7 +18,7 @@ Sobel pipeline project to work on an FPGA. I've tested the design on PYNQ-Z1.
 │   ├── ram_1r1w_sync.sv        # Synchronous 1r1w RAM module
 │   ├── sobel_channel_filter.sv # Sobel filter for a single channel
 │   ├── sobel_operator.sv       # Sobel operator to apply the filter on a pixel
-│   └── sobel_pipeline.sv       # Top-leve module for the design
+│   └── sobel_pipeline.sv       # Top-level module for the design
 ├── .gitignore                  # Git ignore file
 ├── LICENSE                     # License file
 └── README.md                   # This file
